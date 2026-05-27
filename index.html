@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>プロットアプリ</title>
+
 <style>
 body {
   display: flex;
@@ -11,6 +12,7 @@ body {
   margin: 0;
 }
 
+/* 左右レイアウト */
 .left, .right {
   padding: 16px;
   overflow: auto;
@@ -25,15 +27,46 @@ body {
   width: 65%;
 }
 
-input, textarea {
-  width: 100%;
+/* 入力系 */
+label {
+  display: block;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #444;
+}
+
+.box {
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
   margin-bottom: 8px;
+  padding: 6px 0;
+}
+
+.box input,
+.box textarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 14px;
 }
 
 textarea {
-  height: 80px;
+  min-height: 60px;
 }
 
+/* イベント */
+.event .row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.event span {
+  width: 50px;
+  font-size: 12px;
+}
+
+/* プロット */
 .section {
   margin-bottom: 24px;
   padding-bottom: 12px;
@@ -47,40 +80,91 @@ textarea {
 }
 
 button {
-  margin-top: 4px;
+  margin-top: 6px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- 左 -->
 <div class="left">
-  <h2>作品情報</h2>
 
-  <input id="title" placeholder="タイトル">
-  <input id="theme" placeholder="テーマ">
-  <input id="word" placeholder="文字数">
+<h2>作品情報</h2>
 
-  <input id="deadline" placeholder="締切">
-  <input id="event" placeholder="イベント">
-
-  <textarea id="memo" placeholder="メモ"></textarea>
-
-  <button onclick="save()">保存</button>
+<label>タイトル</label>
+<div class="box">
+  <input id="title">
 </div>
 
+<label>テーマ</label>
+<div class="box">
+  <textarea id="theme"></textarea>
+</div>
+
+<label>文字数</label>
+<div class="box">
+  <input id="word">
+</div>
+
+<label>締切</label>
+<div class="box">
+  <input id="deadline">
+</div>
+
+<label>イベント</label>
+<div class="box event">
+
+  <div class="row">
+    <span>日付</span>
+    <input id="event_date">
+  </div>
+
+  <div class="row">
+    <span>名称</span>
+    <input id="event_name">
+  </div>
+
+  <div class="row">
+    <span>会場</span>
+    <input id="event_place">
+  </div>
+
+  <div class="row">
+    <span>SP</span>
+    <input id="event_sp">
+  </div>
+
+</div>
+
+<label>メモ</label>
+<div class="box">
+  <textarea id="memo"></textarea>
+</div>
+
+<button onclick="save()">保存</button>
+
+</div>
+
+<!-- 右 -->
 <div class="right">
   <h2>プロット</h2>
   <div id="plot"></div>
 </div>
 
 <script>
+
 let data = {
   title: "",
   theme: "",
   word: "",
   deadline: "",
-  event: "",
+  event: {
+    date: "",
+    name: "",
+    place: "",
+    sp: ""
+  },
   memo: "",
   structure: [
     { label: "起", scenes: [] },
@@ -90,39 +174,51 @@ let data = {
   ]
 };
 
-// 初期表示
+// 初期化
 load();
 render();
 
-// 保存
+/* 保存 */
 function save() {
   data.title = document.getElementById("title").value;
   data.theme = document.getElementById("theme").value;
   data.word = document.getElementById("word").value;
   data.deadline = document.getElementById("deadline").value;
-  data.event = document.getElementById("event").value;
+
+  data.event = {
+    date: document.getElementById("event_date").value,
+    name: document.getElementById("event_name").value,
+    place: document.getElementById("event_place").value,
+    sp: document.getElementById("event_sp").value
+  };
+
   data.memo = document.getElementById("memo").value;
 
   localStorage.setItem("plot", JSON.stringify(data));
   alert("保存した");
 }
 
-// 読み込み
+/* 読み込み */
 function load() {
   const saved = localStorage.getItem("plot");
   if (saved) {
     data = JSON.parse(saved);
-
-    document.getElementById("title").value = data.title || "";
-    document.getElementById("theme").value = data.theme || "";
-    document.getElementById("word").value = data.word || "";
-    document.getElementById("deadline").value = data.deadline || "";
-    document.getElementById("event").value = data.event || "";
-    document.getElementById("memo").value = data.memo || "";
   }
+
+  document.getElementById("title").value = data.title || "";
+  document.getElementById("theme").value = data.theme || "";
+  document.getElementById("word").value = data.word || "";
+  document.getElementById("deadline").value = data.deadline || "";
+
+  document.getElementById("memo").value = data.memo || "";
+
+  document.getElementById("event_date").value = data.event?.date || "";
+  document.getElementById("event_name").value = data.event?.name || "";
+  document.getElementById("event_place").value = data.event?.place || "";
+  document.getElementById("event_sp").value = data.event?.sp || "";
 }
 
-// 描画
+/* 描画 */
 function render() {
   const plot = document.getElementById("plot");
   plot.innerHTML = "";
@@ -157,7 +253,7 @@ function render() {
   });
 }
 
-// シーン追加
+/* シーン追加 */
 function addScene(index) {
   data.structure[index].scenes.push({
     viewpoint: "",
@@ -167,10 +263,11 @@ function addScene(index) {
   render();
 }
 
-// 更新
+/* 更新 */
 function updateScene(sec, i, key, value) {
   data.structure[sec].scenes[i][key] = value;
 }
+
 </script>
 
 </body>
