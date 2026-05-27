@@ -12,7 +12,7 @@ body {
   margin: 0;
 }
 
-/* 左右レイアウト */
+/* 左右 */
 .left, .right {
   padding: 16px;
   overflow: auto;
@@ -27,46 +27,56 @@ body {
   width: 65%;
 }
 
-/* 入力系 */
-label {
-  display: block;
-  margin-top: 12px;
+/* ===== 左UI（ノート風） ===== */
+
+.field {
+  margin-bottom: 14px;
+}
+
+.field-title {
   font-size: 12px;
-  color: #444;
+  margin-bottom: 4px;
+  color: #333;
 }
 
-.box {
-  border-top: 1px solid #000;
-  border-bottom: 1px solid #000;
-  margin-bottom: 8px;
-  padding: 6px 0;
+/* 枠 */
+.field-box {
+  border: 1px solid #000;
+  padding: 4px;
 }
 
-.box input,
-.box textarea {
+/* 入力 */
+.field-box input,
+.field-box textarea {
   width: 100%;
   border: none;
   outline: none;
   font-size: 14px;
+  background: transparent;
 }
 
-textarea {
+.field-box textarea {
   min-height: 60px;
+  resize: vertical;
 }
 
-/* イベント */
-.event .row {
+/* イベント行 */
+.field-box .row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 4px;
-}
-
-.event span {
-  width: 50px;
   font-size: 12px;
 }
 
-/* プロット */
+.field-box .row input {
+  flex: 1;
+  border: none;
+  border-bottom: 1px solid #999;
+  outline: none;
+}
+
+/* ===== 右プロット ===== */
+
 .section {
   margin-bottom: 24px;
   padding-bottom: 12px;
@@ -92,54 +102,62 @@ button {
 
 <h2>作品情報</h2>
 
-<label>タイトル</label>
-<div class="box">
-  <input id="title">
-</div>
-
-<label>テーマ</label>
-<div class="box">
-  <textarea id="theme"></textarea>
-</div>
-
-<label>文字数</label>
-<div class="box">
-  <input id="word">
-</div>
-
-<label>締切</label>
-<div class="box">
-  <input id="deadline">
-</div>
-
-<label>イベント</label>
-<div class="box event">
-
-  <div class="row">
-    <span>日付</span>
-    <input id="event_date">
+<div class="field">
+  <div class="field-title">-- タイトル --</div>
+  <div class="field-box">
+    <input id="title">
   </div>
-
-  <div class="row">
-    <span>名称</span>
-    <input id="event_name">
-  </div>
-
-  <div class="row">
-    <span>会場</span>
-    <input id="event_place">
-  </div>
-
-  <div class="row">
-    <span>SP</span>
-    <input id="event_sp">
-  </div>
-
 </div>
 
-<label>メモ</label>
-<div class="box">
-  <textarea id="memo"></textarea>
+<div class="field">
+  <div class="field-title">-- テーマ --</div>
+  <div class="field-box">
+    <textarea id="theme"></textarea>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-title">-- 文字数 --</div>
+  <div class="field-box">
+    <input id="word">
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-title">-- 締切 --</div>
+  <div class="field-box">
+    <input id="deadline">
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-title">-- イベント --</div>
+  <div class="field-box">
+
+    <div class="row">
+      日付 <input id="event_date">
+    </div>
+
+    <div class="row">
+      名称 <input id="event_name">
+    </div>
+
+    <div class="row">
+      会場 <input id="event_place">
+    </div>
+
+    <div class="row">
+      SP <input id="event_sp">
+    </div>
+
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-title">-- メモ --</div>
+  <div class="field-box">
+    <textarea id="memo"></textarea>
+  </div>
 </div>
 
 <button onclick="save()">保存</button>
@@ -174,7 +192,6 @@ let data = {
   ]
 };
 
-// 初期化
 load();
 render();
 
