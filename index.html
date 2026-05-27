@@ -13,33 +13,20 @@ body {
   background: #f6f7fb;
 }
 
-/* 左ペイン */
 .left {
-  width: 35%;
+  width: 40%;
   background: #fff;
   border-right: 1px solid #ddd;
   padding: 14px;
   overflow: auto;
 }
 
-/* 右ペイン（簡易説明） */
 .right {
-  width: 65%;
+  width: 60%;
   padding: 20px;
   overflow: auto;
 }
 
-/* ガイド */
-.guide {
-  font-size: 12px;
-  color: #555;
-  background: #eef3ff;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 12px;
-}
-
-/* ボタン */
 button {
   padding: 6px 10px;
   margin: 4px 0;
@@ -54,7 +41,6 @@ button:hover {
   background: #1f36cc;
 }
 
-/* シリーズカード */
 .series {
   border: 1px solid #ddd;
   margin-top: 10px;
@@ -63,7 +49,6 @@ button:hover {
   background: #fafafa;
 }
 
-/* タイトル */
 .series-title {
   font-weight: bold;
   color: #2b4cff;
@@ -71,51 +56,45 @@ button:hover {
   margin-bottom: 6px;
 }
 
-/* 作品 */
 .work {
   margin-left: 12px;
   font-size: 14px;
   padding: 3px;
   cursor: pointer;
-  border-left: 3px solid transparent;
 }
 
 .work:hover {
   background: #eef2ff;
 }
 
-.work:hover {
-  text-decoration: underline;
+.section-title {
+  margin-top: 16px;
+  font-weight: bold;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 左 -->
 <div class="left">
 
-<div class="guide">
-<strong>使い方</strong><br>
-① シリーズを作る（フォルダ）<br>
-② 作品を作る（中身）<br>
-③ 作品をクリック → 編集画面へ
-</div>
+<h3>作品管理</h3>
 
 <button onclick="addSeries()">＋シリーズ作成</button>
 <button onclick="addWork()">＋作品作成</button>
 
 <div id="list"></div>
 
+<h3 class="section-title">ゴミ箱</h3>
+<div id="trash"></div>
+
+<button onclick="clearTrash()">ゴミ箱を完全削除</button>
+
 </div>
 
-<!-- 右 -->
 <div class="right">
   <h2>プロット管理ツール</h2>
-  <p>
-    この画面は「作品の一覧管理」です。<br>
-    編集は作品をクリックすると開きます。
-  </p>
+  <p>作品をクリックすると編集画面へ移動します</p>
 </div>
 
 <script>
@@ -125,9 +104,9 @@ let data = { series: {} };
 load();
 render();
 
-/* -----------------------
-   シリーズ作成
------------------------ */
+/* ----------------
+   シリーズ追加
+---------------- */
 function addSeries() {
   const name = prompt("シリーズ名");
   if (!name) return;
@@ -140,9 +119,9 @@ function addSeries() {
   render();
 }
 
-/* -----------------------
-   作品作成
------------------------ */
+/* ----------------
+   作品追加
+---------------- */
 function addWork() {
   const seriesName = prompt("シリーズ名（空なら単発）") || "単発";
   const title = prompt("作品タイトル");
@@ -153,37 +132,43 @@ function addWork() {
   }
 
   data.series[seriesName].works[title] = {
-    title,
-    theme: "",
-    word: "",
-    deadline: "",
-    event: { date:"", name:"", place:"", sp:"" },
-    memo: "",
-    structure: [
-      { label: "起", scenes: [] },
-      { label: "承", scenes: [] },
-      { label: "転", scenes: [] },
-      { label: "結", scenes: [] }
-    ]
+    data: {
+      title,
+      theme: "",
+      word: "",
+      deadline: "",
+      memo: "",
+      structure: [
+        { label: "起", scenes: [] },
+        { label: "承", scenes: [] },
+        { label: "転", scenes: [] },
+        { label: "結", scenes: [] }
+      ]
+    },
+    deleted: false
   };
 
   save();
   render();
 }
 
-/* -----------------------
-   編集画面へ
------------------------ */
-function openWork(series, title) {
-  location.href = `edit.html?series=${encodeURIComponent(series)}&work=${encodeURIComponent(title)}`;
+/* ----------------
+   開く
+---------------- */
+function openWork(s, w) {
+  location.href =
+    `edit.html?series=${encodeURIComponent(s)}&work=${encodeURIComponent(w)}`;
 }
 
-/* -----------------------
+/* ----------------
    表示
------------------------ */
+---------------- */
 function render() {
   const list = document.getElementById("list");
+  const trash = document.getElementById("trash");
+
   list.innerHTML = "";
+  trash.innerHTML = "";
 
   Object.keys(data.series).forEach(s => {
 
@@ -198,34 +183,70 @@ function render() {
 
     Object.keys(data.series[s].works).forEach(w => {
 
-      const work = document.createElement("div");
-      work.className = "work";
-      work.textContent = w;
+      const work = data.series[s].works[w];
 
-      work.onclick = () => openWork(s, w);
+      const div = document.createElement("div");
+      div.className = "work";
 
-      box.appendChild(work);
+      div.textContent = w;
+
+      if (work.deleted) {
+        div.style.color = "#999";
+
+        div.onclick = () => {
+          const ok = confirm("完全削除しますか？");
+          if (!ok) return;
+
+          delete data.series[s].works[w];
+          save();
+          render();
+        };
+
+        trash.appendChild(div);
+      } else {
+        div.onclick = () => openWork(s, w);
+        list.appendChild(div);
+      }
     });
 
     list.appendChild(box);
   });
 }
 
-/* -----------------------
+/* ----------------
+   ゴミ箱全削除
+---------------- */
+function clearTrash() {
+  const ok = confirm("ゴミ箱を完全に削除しますか？");
+  if (!ok) return;
+
+  Object.keys(data.series).forEach(s => {
+    const works = data.series[s].works;
+
+    Object.keys(works).forEach(w => {
+      if (works[w].deleted) {
+        delete works[w];
+      }
+    });
+  });
+
+  save();
+  render();
+}
+
+/* ----------------
    保存
------------------------ */
+---------------- */
 function save() {
   localStorage.setItem("plotApp", JSON.stringify(data));
 }
 
-/* -----------------------
+/* ----------------
    読み込み
------------------------ */
+---------------- */
 function load() {
   const saved = localStorage.getItem("plotApp");
-  if (saved) {
-    data = JSON.parse(saved);
-  }
+  if (saved) data = JSON.parse(saved);
 }
 
 </script>
