@@ -1,2 +1,177 @@
-<h1>プロット帳</h1>
-<p>最初のテスト</p>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>プロットアプリ</title>
+<style>
+body {
+  display: flex;
+  font-family: sans-serif;
+  height: 100vh;
+  margin: 0;
+}
+
+.left, .right {
+  padding: 16px;
+  overflow: auto;
+}
+
+.left {
+  width: 35%;
+  border-right: 1px solid #ccc;
+}
+
+.right {
+  width: 65%;
+}
+
+input, textarea {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+textarea {
+  height: 80px;
+}
+
+.section {
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.scene {
+  border: 1px solid #ddd;
+  padding: 6px;
+  margin: 6px 0;
+}
+
+button {
+  margin-top: 4px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="left">
+  <h2>作品情報</h2>
+
+  <input id="title" placeholder="タイトル">
+  <input id="theme" placeholder="テーマ">
+  <input id="word" placeholder="文字数">
+
+  <input id="deadline" placeholder="締切">
+  <input id="event" placeholder="イベント">
+
+  <textarea id="memo" placeholder="メモ"></textarea>
+
+  <button onclick="save()">保存</button>
+</div>
+
+<div class="right">
+  <h2>プロット</h2>
+  <div id="plot"></div>
+</div>
+
+<script>
+let data = {
+  title: "",
+  theme: "",
+  word: "",
+  deadline: "",
+  event: "",
+  memo: "",
+  structure: [
+    { label: "起", scenes: [] },
+    { label: "承", scenes: [] },
+    { label: "転", scenes: [] },
+    { label: "結", scenes: [] }
+  ]
+};
+
+// 初期表示
+load();
+render();
+
+// 保存
+function save() {
+  data.title = document.getElementById("title").value;
+  data.theme = document.getElementById("theme").value;
+  data.word = document.getElementById("word").value;
+  data.deadline = document.getElementById("deadline").value;
+  data.event = document.getElementById("event").value;
+  data.memo = document.getElementById("memo").value;
+
+  localStorage.setItem("plot", JSON.stringify(data));
+  alert("保存した");
+}
+
+// 読み込み
+function load() {
+  const saved = localStorage.getItem("plot");
+  if (saved) {
+    data = JSON.parse(saved);
+
+    document.getElementById("title").value = data.title || "";
+    document.getElementById("theme").value = data.theme || "";
+    document.getElementById("word").value = data.word || "";
+    document.getElementById("deadline").value = data.deadline || "";
+    document.getElementById("event").value = data.event || "";
+    document.getElementById("memo").value = data.memo || "";
+  }
+}
+
+// 描画
+function render() {
+  const plot = document.getElementById("plot");
+  plot.innerHTML = "";
+
+  data.structure.forEach((sec, sIndex) => {
+    const div = document.createElement("div");
+    div.className = "section";
+
+    div.innerHTML = `<h3>${sec.label}</h3>`;
+
+    sec.scenes.forEach((scene, i) => {
+      const sc = document.createElement("div");
+      sc.className = "scene";
+
+      sc.innerHTML = `
+        <input value="${scene.viewpoint}" placeholder="視点"
+          onchange="updateScene(${sIndex},${i},'viewpoint',this.value)">
+        <input value="${scene.stage}" placeholder="舞台"
+          onchange="updateScene(${sIndex},${i},'stage',this.value)">
+        <textarea onchange="updateScene(${sIndex},${i},'text',this.value)">${scene.text}</textarea>
+      `;
+
+      div.appendChild(sc);
+    });
+
+    const btn = document.createElement("button");
+    btn.textContent = "＋シーン追加";
+    btn.onclick = () => addScene(sIndex);
+
+    div.appendChild(btn);
+    plot.appendChild(div);
+  });
+}
+
+// シーン追加
+function addScene(index) {
+  data.structure[index].scenes.push({
+    viewpoint: "",
+    stage: "",
+    text: ""
+  });
+  render();
+}
+
+// 更新
+function updateScene(sec, i, key, value) {
+  data.structure[sec].scenes[i][key] = value;
+}
+</script>
+
+</body>
+</html>
