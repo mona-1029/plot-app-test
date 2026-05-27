@@ -18,6 +18,8 @@ body {
   padding: 14px;
   background: #fff;
   border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
   overflow: auto;
 }
 
@@ -27,26 +29,62 @@ body {
   overflow: auto;
 }
 
+/* タイトルエリア */
+.titleBox {
+  margin-bottom: 10px;
+}
+
+.titleBox input {
+  width: 100%;
+  padding: 6px;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+/* フィールド */
 input, textarea {
   width: 100%;
   margin-bottom: 8px;
   padding: 6px;
 }
 
+/* ボタン共通 */
 button {
   padding: 6px 10px;
-  margin: 4px;
+  margin: 4px 0;
   border: none;
-  background: #2b4cff;
-  color: white;
   border-radius: 6px;
   cursor: pointer;
+  color: white;
 }
 
-button:hover {
+/* 通常 */
+.btn {
+  background: #2b4cff;
+}
+.btn:hover {
   background: #1f36cc;
 }
 
+/* 危険ボタン */
+.danger {
+  background: #e53935;
+}
+.danger:hover {
+  background: #c62828;
+}
+
+/* 下固定エリア */
+.bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
+}
+
+/* プロット */
 .scene {
   border: 1px solid #ddd;
   padding: 6px;
@@ -57,27 +95,39 @@ button:hover {
 
 <body>
 
+<!-- 左 -->
 <div class="left">
 
-<h3>作品情報</h3>
+<div class="titleBox">
+  <input id="title">
+</div>
 
-<input id="title">
-
+<div>
 <input id="theme" placeholder="テーマ">
 <input id="word" placeholder="文字数">
 <input id="deadline" placeholder="締切">
 <textarea id="memo" placeholder="メモ"></textarea>
+</div>
 
-<button onclick="rename()">タイトル変更</button>
-<button onclick="save()">保存</button>
-<button onclick="deleteWork()">ゴミ箱へ</button>
-<button onclick="goBack()">戻る</button>
+<button class="btn" onclick="save()">保存</button>
+
+<!-- 下固定（重要ボタン群） -->
+<div class="bottom">
+
+<button class="btn" onclick="rename()">タイトル変更</button>
+<button class="danger" onclick="deleteWork()">🗑 ゴミ箱へ移動</button>
+<button class="btn" onclick="goBack()">← 戻る</button>
 
 </div>
 
+</div>
+
+<!-- 右 -->
 <div class="right">
+
 <h3>プロット</h3>
 <div id="plot"></div>
+
 </div>
 
 <script>
@@ -93,6 +143,7 @@ render();
 ---------------- */
 function init() {
   const p = new URLSearchParams(location.search);
+
   s = p.get("series");
   w = p.get("work");
 
@@ -122,11 +173,11 @@ function save() {
 }
 
 /* ----------------
-   タイトル変更
+   タイトル変更（確実に反映）
 ---------------- */
 function rename() {
-  const newName = title.value;
-  if (!newName) return;
+  const newName = title.value.trim();
+  if (!newName || newName === w) return;
 
   const works = data.series[s].works;
 
@@ -136,13 +187,14 @@ function rename() {
   w = newName;
 
   save();
+  alert("タイトル変更した");
 }
 
 /* ----------------
-   ゴミ箱へ
+   ゴミ箱へ移動
 ---------------- */
 function deleteWork() {
-  const ok = confirm("ゴミ箱へ移動しますか？");
+  const ok = confirm("この作品をゴミ箱へ移動しますか？");
   if (!ok) return;
 
   data.series[s].works[w].deleted = true;
@@ -185,6 +237,7 @@ function render() {
     });
 
     const btn = document.createElement("button");
+    btn.className = "btn";
     btn.textContent = "＋シーン追加";
 
     btn.onclick = () => {
