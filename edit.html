@@ -13,83 +13,29 @@ body {
   background: #f6f7fb;
 }
 
-/* 左（作品情報） */
 .left {
   width: 35%;
   padding: 14px;
-  overflow: auto;
-  border-right: 1px solid #ddd;
   background: #fff;
+  border-right: 1px solid #ddd;
+  overflow: auto;
 }
 
-/* 右（プロット） */
 .right {
   width: 65%;
   padding: 16px;
   overflow: auto;
 }
 
-/* ノート風フィールド */
-.field {
-  margin-bottom: 14px;
-}
-
-.field-title {
-  font-size: 12px;
-  margin-bottom: 4px;
-  color: #444;
-}
-
-.field-box {
-  border: 1px solid #000;
-  padding: 6px;
-}
-
-.field-box input,
-.field-box textarea {
+input, textarea {
   width: 100%;
-  border: none;
-  outline: none;
-  font-size: 14px;
-  background: transparent;
-}
-
-.field-box textarea {
-  min-height: 80px;
-  resize: vertical;
-}
-
-/* イベント */
-.row {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 4px;
-  font-size: 12px;
-}
-
-.row input {
-  flex: 1;
-  border: none;
-  border-bottom: 1px solid #aaa;
-  outline: none;
-}
-
-/* 右プロット */
-.section {
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-.scene {
-  border: 1px solid #ddd;
+  margin-bottom: 8px;
   padding: 6px;
-  margin: 6px 0;
 }
 
 button {
-  margin-top: 6px;
   padding: 6px 10px;
+  margin: 4px;
   border: none;
   background: #2b4cff;
   color: white;
@@ -101,182 +47,159 @@ button:hover {
   background: #1f36cc;
 }
 
-.topbar {
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.back {
-  background: #666;
+.scene {
+  border: 1px solid #ddd;
+  padding: 6px;
+  margin: 6px 0;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 左 -->
 <div class="left">
 
-<div class="topbar">
-  <h3 id="title">編集</h3>
-</div>
+<h3>作品情報</h3>
 
-<div class="field">
-  <div class="field-title">-- テーマ --</div>
-  <div class="field-box">
-    <textarea id="theme"></textarea>
-  </div>
-</div>
+<input id="title">
 
-<div class="field">
-  <div class="field-title">-- 文字数 --</div>
-  <div class="field-box">
-    <input id="word">
-  </div>
-</div>
+<input id="theme" placeholder="テーマ">
+<input id="word" placeholder="文字数">
+<input id="deadline" placeholder="締切">
+<textarea id="memo" placeholder="メモ"></textarea>
 
-<div class="field">
-  <div class="field-title">-- 締切 --</div>
-  <div class="field-box">
-    <input id="deadline">
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-title">-- メモ --</div>
-  <div class="field-box">
-    <textarea id="memo"></textarea>
-  </div>
-</div>
-
+<button onclick="rename()">タイトル変更</button>
 <button onclick="save()">保存</button>
-<button class="back" onclick="goBack()">戻る</button>
+<button onclick="deleteWork()">ゴミ箱へ</button>
+<button onclick="goBack()">戻る</button>
 
 </div>
 
-<!-- 右 -->
 <div class="right">
-
 <h3>プロット</h3>
 <div id="plot"></div>
-
 </div>
 
 <script>
 
 let data;
-let seriesName;
-let workName;
+let s, w;
 
 init();
 render();
 
-/* URLから読み込み */
+/* ----------------
+   初期化
+---------------- */
 function init() {
-  const params = new URLSearchParams(location.search);
+  const p = new URLSearchParams(location.search);
+  s = p.get("series");
+  w = p.get("work");
 
-  seriesName = params.get("series");
-  workName = params.get("work");
+  data = JSON.parse(localStorage.getItem("plotApp"));
 
-  const saved = JSON.parse(localStorage.getItem("plotApp"));
+  const work = data.series[s].works[w].data;
 
-  data = saved;
-
-  const w = data.series[seriesName].works[workName];
-
-  document.getElementById("title").textContent =
-    seriesName + " / " + workName;
-
-  document.getElementById("theme").value = w.theme || "";
-  document.getElementById("word").value = w.word || "";
-  document.getElementById("deadline").value = w.deadline || "";
-  document.getElementById("memo").value = w.memo || "";
+  document.getElementById("title").value = w;
+  document.getElementById("theme").value = work.theme || "";
+  document.getElementById("word").value = work.word || "";
+  document.getElementById("deadline").value = work.deadline || "";
+  document.getElementById("memo").value = work.memo || "";
 }
 
-/* 保存 */
+/* ----------------
+   保存
+---------------- */
 function save() {
-  const w = data.series[seriesName].works[workName];
+  const work = data.series[s].works[w].data;
 
-  w.theme = document.getElementById("theme").value;
-  w.word = document.getElementById("word").value;
-  w.deadline = document.getElementById("deadline").value;
-  w.memo = document.getElementById("memo").value;
+  work.theme = theme.value;
+  work.word = word.value;
+  work.deadline = deadline.value;
+  work.memo = memo.value;
+
+  localStorage.setItem("plotApp", JSON.stringify(data));
+}
+
+/* ----------------
+   タイトル変更
+---------------- */
+function rename() {
+  const newName = title.value;
+  if (!newName) return;
+
+  const works = data.series[s].works;
+
+  works[newName] = works[w];
+  delete works[w];
+
+  w = newName;
+
+  save();
+}
+
+/* ----------------
+   ゴミ箱へ
+---------------- */
+function deleteWork() {
+  const ok = confirm("ゴミ箱へ移動しますか？");
+  if (!ok) return;
+
+  data.series[s].works[w].deleted = true;
 
   localStorage.setItem("plotApp", JSON.stringify(data));
 
-  alert("保存した");
+  location.href = "index.html";
 }
 
-/* 戻る */
+/* ----------------
+   戻る
+---------------- */
 function goBack() {
   location.href = "index.html";
 }
 
-/* プロット表示 */
+/* ----------------
+   プロット表示
+---------------- */
 function render() {
-  const w = data.series[seriesName].works[workName];
+  const work = data.series[s].works[w].data;
   const plot = document.getElementById("plot");
 
   plot.innerHTML = "";
 
-  w.structure.forEach((sec, i) => {
+  work.structure.forEach((sec, i) => {
 
     const div = document.createElement("div");
-    div.className = "section";
 
     div.innerHTML = `<h4>${sec.label}</h4>`;
 
-    sec.scenes.forEach((sc, j) => {
-
-      const box = document.createElement("div");
-      box.className = "scene";
-
-      box.innerHTML = `
-        <input value="${sc.viewpoint || ""}" placeholder="視点"
-          onchange="updateScene(${i},${j},'viewpoint',this.value)">
-        <input value="${sc.stage || ""}" placeholder="舞台"
-          onchange="updateScene(${i},${j},'stage',this.value)">
-        <textarea onchange="updateScene(${i},${j},'text',this.value)">${sc.text || ""}</textarea>
+    sec.scenes.forEach(sc => {
+      div.innerHTML += `
+        <div class="scene">
+          <input placeholder="視点">
+          <input placeholder="舞台">
+          <textarea placeholder="内容"></textarea>
+        </div>
       `;
-
-      div.appendChild(box);
     });
 
     const btn = document.createElement("button");
     btn.textContent = "＋シーン追加";
-    btn.onclick = () => addScene(i);
+
+    btn.onclick = () => {
+      sec.scenes.push({});
+      save();
+      render();
+    };
 
     div.appendChild(btn);
+
     plot.appendChild(div);
   });
-}
-
-/* シーン追加 */
-function addScene(i) {
-  const w = data.series[seriesName].works[workName];
-
-  w.structure[i].scenes.push({
-    viewpoint: "",
-    stage: "",
-    text: ""
-  });
-
-  save();
-  render();
-}
-
-/* 更新 */
-function updateScene(i, j, key, value) {
-  const w = data.series[seriesName].works[workName];
-
-  w.structure[i].scenes[j][key] = value;
-
-  save();
 }
 
 </script>
 
 </body>
 </html>
-
