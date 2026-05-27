@@ -18,8 +18,6 @@ body {
   padding: 14px;
   background: #fff;
   border-right: 1px solid #ddd;
-  display: flex;
-  flex-direction: column;
   overflow: auto;
 }
 
@@ -29,26 +27,24 @@ body {
   overflow: auto;
 }
 
-/* タイトルエリア */
-.titleBox {
-  margin-bottom: 10px;
+/* ノート風 */
+.field {
+  margin-bottom: 12px;
 }
 
-.titleBox input {
-  width: 100%;
-  padding: 6px;
-  font-size: 16px;
-  margin-bottom: 6px;
+label {
+  font-size: 12px;
+  color: #555;
 }
 
-/* フィールド */
 input, textarea {
   width: 100%;
-  margin-bottom: 8px;
   padding: 6px;
+  margin-top: 4px;
+  box-sizing: border-box;
 }
 
-/* ボタン共通 */
+/* ボタン */
 button {
   padding: 6px 10px;
   margin: 4px 0;
@@ -58,37 +54,27 @@ button {
   color: white;
 }
 
-/* 通常 */
 .btn {
   background: #2b4cff;
 }
+
 .btn:hover {
   background: #1f36cc;
 }
 
-/* 危険ボタン */
 .danger {
   background: #e53935;
 }
+
 .danger:hover {
   background: #c62828;
 }
 
-/* 下固定エリア */
-.bottom {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: 10px;
-  border-top: 1px solid #ddd;
-}
-
-/* プロット */
-.scene {
-  border: 1px solid #ddd;
-  padding: 6px;
-  margin: 6px 0;
+/* 上部情報エリア */
+.topbar {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
 }
 </style>
 </head>
@@ -98,27 +84,37 @@ button {
 <!-- 左 -->
 <div class="left">
 
-<div class="titleBox">
-  <input id="title">
+<div class="topbar">
+  <div class="field">
+    <label>タイトル</label>
+    <input id="title">
+  </div>
+
+  <button class="btn" onclick="save()">保存</button>
+  <button class="danger" onclick="deleteWork()">ゴミ箱へ移動</button>
 </div>
 
-<div>
-<input id="theme" placeholder="テーマ">
-<input id="word" placeholder="文字数">
-<input id="deadline" placeholder="締切">
-<textarea id="memo" placeholder="メモ"></textarea>
+<div class="field">
+  <label>テーマ</label>
+  <input id="theme">
 </div>
 
-<button class="btn" onclick="save()">保存</button>
-
-<!-- 下固定（重要ボタン群） -->
-<div class="bottom">
-
-<button class="btn" onclick="rename()">タイトル変更</button>
-<button class="danger" onclick="deleteWork()">🗑 ゴミ箱へ移動</button>
-<button class="btn" onclick="goBack()">← 戻る</button>
-
+<div class="field">
+  <label>文字数</label>
+  <input id="word">
 </div>
+
+<div class="field">
+  <label>締切</label>
+  <input id="deadline">
+</div>
+
+<div class="field">
+  <label>メモ</label>
+  <textarea id="memo"></textarea>
+</div>
+
+<button class="btn" onclick="goBack()">戻る</button>
 
 </div>
 
@@ -151,15 +147,16 @@ function init() {
 
   const work = data.series[s].works[w].data;
 
-  document.getElementById("title").value = w;
-  document.getElementById("theme").value = work.theme || "";
-  document.getElementById("word").value = work.word || "";
-  document.getElementById("deadline").value = work.deadline || "";
-  document.getElementById("memo").value = work.memo || "";
+  // ←ここが「直感的編集」
+  title.value = w;
+  theme.value = work.theme || "";
+  word.value = work.word || "";
+  deadline.value = work.deadline || "";
+  memo.value = work.memo || "";
 }
 
 /* ----------------
-   保存
+   保存（全部まとめて）
 ---------------- */
 function save() {
   const work = data.series[s].works[w].data;
@@ -169,29 +166,23 @@ function save() {
   work.deadline = deadline.value;
   work.memo = memo.value;
 
+  /* タイトル変更もここで反映 */
+  const newTitle = title.value.trim();
+
+  if (newTitle && newTitle !== w) {
+    const works = data.series[s].works;
+
+    works[newTitle] = works[w];
+    delete works[w];
+
+    w = newTitle;
+  }
+
   localStorage.setItem("plotApp", JSON.stringify(data));
 }
 
 /* ----------------
-   タイトル変更（確実に反映）
----------------- */
-function rename() {
-  const newName = title.value.trim();
-  if (!newName || newName === w) return;
-
-  const works = data.series[s].works;
-
-  works[newName] = works[w];
-  delete works[w];
-
-  w = newName;
-
-  save();
-  alert("タイトル変更した");
-}
-
-/* ----------------
-   ゴミ箱へ移動
+   ゴミ箱へ
 ---------------- */
 function deleteWork() {
   const ok = confirm("この作品をゴミ箱へ移動しますか？");
@@ -223,18 +214,7 @@ function render() {
   work.structure.forEach((sec, i) => {
 
     const div = document.createElement("div");
-
     div.innerHTML = `<h4>${sec.label}</h4>`;
-
-    sec.scenes.forEach(sc => {
-      div.innerHTML += `
-        <div class="scene">
-          <input placeholder="視点">
-          <input placeholder="舞台">
-          <textarea placeholder="内容"></textarea>
-        </div>
-      `;
-    });
 
     const btn = document.createElement("button");
     btn.className = "btn";
@@ -247,7 +227,6 @@ function render() {
     };
 
     div.appendChild(btn);
-
     plot.appendChild(div);
   });
 }
