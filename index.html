@@ -2,129 +2,90 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>プロット管理アプリ</title>
+<title>プロット管理ホーム</title>
 
 <style>
 body {
-  display: flex;
   margin: 0;
   font-family: sans-serif;
+  display: flex;
   height: 100vh;
   background: #f6f7fb;
 }
 
-/* 左 */
+/* 左ペイン */
 .left {
   width: 35%;
+  background: #fff;
+  border-right: 1px solid #ddd;
   padding: 14px;
   overflow: auto;
-  border-right: 1px solid #ddd;
-  background: #ffffff;
 }
 
-/* 右 */
+/* 右ペイン（簡易説明） */
 .right {
   width: 65%;
-  padding: 16px;
+  padding: 20px;
   overflow: auto;
 }
 
 /* ガイド */
 .guide {
   font-size: 12px;
-  color: #666;
-  margin-bottom: 12px;
-  background: #f0f3ff;
-  padding: 8px;
+  color: #555;
+  background: #eef3ff;
+  padding: 10px;
   border-radius: 6px;
-}
-
-/* シリーズカード */
-.series {
   margin-bottom: 12px;
-  padding: 8px;
-  border-radius: 8px;
-  background: #f9f9f9;
-  border: 1px solid #ddd;
-}
-
-/* シリーズタイトル */
-.series-title {
-  font-weight: bold;
-  cursor: pointer;
-  color: #2b4cff;
-}
-
-/* 作品 */
-.work {
-  margin-left: 12px;
-  padding: 4px;
-  font-size: 14px;
-  cursor: pointer;
-  border-left: 3px solid transparent;
-}
-
-/* hover */
-.work:hover {
-  background: #eef2ff;
-}
-
-/* 選択中 */
-.work.active {
-  background: #dfe6ff;
-  border-left: 3px solid #2b4cff;
 }
 
 /* ボタン */
 button {
-  margin-top: 6px;
   padding: 6px 10px;
+  margin: 4px 0;
   border: none;
-  background: #2b4cff;
-  color: white;
   border-radius: 6px;
   cursor: pointer;
+  background: #2b4cff;
+  color: white;
 }
 
 button:hover {
   background: #1f36cc;
 }
 
-/* 右側 */
-#currentTitle {
-  margin-bottom: 10px;
-  padding: 10px;
-  background: white;
-  border-radius: 8px;
+/* シリーズカード */
+.series {
   border: 1px solid #ddd;
-}
-
-/* エディタ */
-#editor {
-  background: white;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-}
-
-input, textarea {
-  width: 100%;
-  margin-top: 6px;
-  padding: 6px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-textarea {
-  min-height: 80px;
-}
-
-/* 下部ボタン列 */
-.actions {
   margin-top: 10px;
-  display: flex;
-  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+/* タイトル */
+.series-title {
+  font-weight: bold;
+  color: #2b4cff;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+
+/* 作品 */
+.work {
+  margin-left: 12px;
+  font-size: 14px;
+  padding: 3px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+
+.work:hover {
+  background: #eef2ff;
+}
+
+.work:hover {
+  text-decoration: underline;
 }
 </style>
 </head>
@@ -136,38 +97,37 @@ textarea {
 
 <div class="guide">
 <strong>使い方</strong><br>
-① シリーズ追加 → フォルダ作成<br>
-② 作品追加 → 中に保存<br>
-③ 作品クリック → 右で編集
+① シリーズを作る（フォルダ）<br>
+② 作品を作る（中身）<br>
+③ 作品をクリック → 編集画面へ
 </div>
 
-<button onclick="addSeries()">＋シリーズ追加</button>
-<button onclick="addWork()">＋作品追加</button>
+<button onclick="addSeries()">＋シリーズ作成</button>
+<button onclick="addWork()">＋作品作成</button>
 
-<div id="seriesList"></div>
+<div id="list"></div>
 
 </div>
 
 <!-- 右 -->
 <div class="right">
-
-<h2 id="currentTitle">未選択</h2>
-
-<div id="editor"></div>
-
+  <h2>プロット管理ツール</h2>
+  <p>
+    この画面は「作品の一覧管理」です。<br>
+    編集は作品をクリックすると開きます。
+  </p>
 </div>
 
 <script>
 
 let data = { series: {} };
 
-let current = { series: null, work: null };
-
 load();
-renderSeries();
-renderEditor();
+render();
 
-/* シリーズ追加 */
+/* -----------------------
+   シリーズ作成
+----------------------- */
 function addSeries() {
   const name = prompt("シリーズ名");
   if (!name) return;
@@ -177,10 +137,12 @@ function addSeries() {
   }
 
   save();
-  renderSeries();
+  render();
 }
 
-/* 作品追加 */
+/* -----------------------
+   作品作成
+----------------------- */
 function addWork() {
   const seriesName = prompt("シリーズ名（空なら単発）") || "単発";
   const title = prompt("作品タイトル");
@@ -195,116 +157,75 @@ function addWork() {
     theme: "",
     word: "",
     deadline: "",
-    event: {},
-    memo: ""
+    event: { date:"", name:"", place:"", sp:"" },
+    memo: "",
+    structure: [
+      { label: "起", scenes: [] },
+      { label: "承", scenes: [] },
+      { label: "転", scenes: [] },
+      { label: "結", scenes: [] }
+    ]
   };
 
-  current.series = seriesName;
-  current.work = title;
-
   save();
-  renderSeries();
-  renderEditor();
+  render();
 }
 
-/* 作品選択 */
-function selectWork(series, title) {
-  current.series = series;
-  current.work = title;
-
-  renderSeries();
-  renderEditor();
+/* -----------------------
+   編集画面へ
+----------------------- */
+function openWork(series, title) {
+  location.href = `edit.html?series=${encodeURIComponent(series)}&work=${encodeURIComponent(title)}`;
 }
 
-/* 左表示 */
-function renderSeries() {
-  const list = document.getElementById("seriesList");
+/* -----------------------
+   表示
+----------------------- */
+function render() {
+  const list = document.getElementById("list");
   list.innerHTML = "";
 
   Object.keys(data.series).forEach(s => {
-    const div = document.createElement("div");
-    div.className = "series";
+
+    const box = document.createElement("div");
+    box.className = "series";
 
     const title = document.createElement("div");
     title.className = "series-title";
     title.textContent = "▼ " + s;
 
-    div.appendChild(title);
+    box.appendChild(title);
 
     Object.keys(data.series[s].works).forEach(w => {
+
       const work = document.createElement("div");
       work.className = "work";
-
-      if (current.series === s && current.work === w) {
-        work.classList.add("active");
-      }
-
       work.textContent = w;
 
-      work.onclick = () => selectWork(s, w);
+      work.onclick = () => openWork(s, w);
 
-      div.appendChild(work);
+      box.appendChild(work);
     });
 
-    list.appendChild(div);
+    list.appendChild(box);
   });
 }
 
-/* 右表示 */
-function renderEditor() {
-  const ed = document.getElementById("editor");
-
-  if (!current.series || !current.work) {
-    document.getElementById("currentTitle").textContent = "未選択";
-    ed.innerHTML = "";
-    return;
-  }
-
-  const w = data.series[current.series].works[current.work];
-
-  document.getElementById("currentTitle").textContent =
-    current.series + " / " + current.work;
-
-  ed.innerHTML = `
-    <label>テーマ</label>
-    <input id="theme" value="${w.theme}">
-
-    <label>文字数</label>
-    <input id="word" value="${w.word}">
-
-    <label>締切</label>
-    <input id="deadline" value="${w.deadline}">
-
-    <label>メモ</label>
-    <textarea id="memo">${w.memo}</textarea>
-
-    <div class="actions">
-      <button onclick="saveWork()">保存</button>
-    </div>
-  `;
-}
-
-/* 保存 */
-function saveWork() {
-  const w = data.series[current.series].works[current.work];
-
-  w.theme = document.getElementById("theme").value;
-  w.word = document.getElementById("word").value;
-  w.deadline = document.getElementById("deadline").value;
-  w.memo = document.getElementById("memo").value;
-
-  save();
-}
-
-/* 保存全体 */
+/* -----------------------
+   保存
+----------------------- */
 function save() {
   localStorage.setItem("plotApp", JSON.stringify(data));
 }
 
-/* 読み込み */
+/* -----------------------
+   読み込み
+----------------------- */
 function load() {
   const saved = localStorage.getItem("plotApp");
-  if (saved) data = JSON.parse(saved);
+  if (saved) {
+    data = JSON.parse(saved);
+  }
 }
 
 </script>
